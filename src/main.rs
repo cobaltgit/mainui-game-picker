@@ -1,4 +1,4 @@
-use std::{fs, io};
+use std::{env, fs, io, process};
 use rand::Rng;
 use serde_json::Value;
 use regex::Regex;
@@ -52,21 +52,41 @@ fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>
  }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let argv: Vec<String> = env::args().collect();
+    let system_arg: String = argv.get(1).map_or("NULL", |v| v).to_string();
     let mut rng = rand::rng();
-    let systems: Vec<String> = if fs::metadata("/mnt/SDCARD/Emu").is_ok() {
-        listdir("/mnt/SDCARD/Emu")?
+    
+    let emu_path: &str = if fs::metadata("/mnt/SDCARD/Emu").is_ok() {
+        "/mnt/SDCARD/Emu"
     } else {
-        listdir("/mnt/SDCARD/Emus")?
+        "/mnt/SDCARD/Emus"
     };
+    let systems: Vec<String> = listdir(emu_path)?;
+    
+    let mut chosen_system: &str = if argv.len() > 1 {
+        &format!("{}/{}", emu_path, system_arg)
+    } else {
+        &systems[rng.random_range(0..systems.len())]
+    };
+
+    if !fs::metadata(chosen_system).is_ok() || system_arg.starts_with("/") || system_arg.contains("..") {
+        eprintln!("{}: invalid or nonexistent directory", chosen_system);
+        process::exit(1)
+    }
+
     loop {
-        let chosen_system: &str = &systems[rng.random_range(0..systems.len())];
-        match get_roms(chosen_system) {
+        match get_roms(&chosen_system) {
             Ok(roms) if !roms.is_empty() => {
                 let chosen_rom: &str = &roms[rng.random_range(0..roms.len())];
                 println!("{}", chosen_rom);
                 break;
             }
-            _ => continue,
+            _ => {
+                if argv.len() == 1 {
+                    chosen_system = &systems[rng.random_range(0..systems.len())]
+                }
+                continue;
+            }
         }
     }
     Ok(())
