@@ -53,7 +53,11 @@ fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut rng = rand::rng();
-    let systems: Vec<String> = listdir("/mnt/SDCARD/Emus")?;
+    let systems: Vec<String> = if fs::metadata("/mnt/SDCARD/Emu").is_ok() {
+        listdir("/mnt/SDCARD/Emu")?
+    } else {
+        listdir("/mnt/SDCARD/Emus")?
+    };
     loop {
         let chosen_system: &str = &systems[rng.random_range(0..systems.len())];
         match get_roms(chosen_system) {
