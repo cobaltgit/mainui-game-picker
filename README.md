@@ -32,7 +32,7 @@ $ ./mainui-game-picker SFC
 
 # get a random game from any system and launch it using the randomly-picked system's launch script
 # must be used as part of an app or X-menu script due to using execv instead of writing to /tmp/cmd_to_run.sh
-$ ./mainui-game-picker GBC --launch
+$ ./mainui-game-picker --launch
 /mnt/SDCARD/Roms/MD/Sonic the Hedgehog (Japan, Europe).zip
 ...
 
