@@ -1,7 +1,8 @@
-use std::{env, fs, io, process};
 use rand::Rng;
-use serde_json::Value;
 use regex::Regex;
+use serde_json::Value;
+use std::{env, fs, io, process};
+use std::os::unix::process::CommandExt;
 
 fn get_config(file: &str) -> Result<Value, Box<dyn std::error::Error>> {
     let file = fs::File::open(file)?;
@@ -53,7 +54,10 @@ fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let argv: Vec<String> = env::args().collect();
-    let system_arg: String = argv.get(1).map_or("NULL", |v| v).to_string();
+    let should_launch = argv.contains(&"--launch".to_string());
+    let posargs: Vec<String> = argv.into_iter().filter(|a| a != "--launch").collect();
+    let system_arg: String = posargs.get(1).map_or("NULL", |v| v).to_string();
+    
     let mut rng = rand::rng();
     
     let emu_path: &str = if fs::metadata("/mnt/SDCARD/Emu").is_ok() {
@@ -63,7 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let systems: Vec<String> = listdir(emu_path)?;
     
-    let mut chosen_system: &str = if argv.len() > 1 {
+    let mut chosen_system: &str = if posargs.len() > 1 {
         &format!("{}/{}", emu_path, system_arg)
     } else {
         &systems[rng.random_range(0..systems.len())]
@@ -79,15 +83,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(roms) if !roms.is_empty() => {
                 let chosen_rom: &str = &roms[rng.random_range(0..roms.len())];
                 println!("{}", chosen_rom);
+
+                if should_launch {
+                    let config = get_config(&format!("{}/config.json", chosen_system))?;
+                    let launch_path: String = if let Some(launch_path_relative) = config["launch"].as_str() {
+                        if launch_path_relative.starts_with("/") { // absolute path
+                            launch_path_relative.to_string()
+                        } else { // assume relative path
+                            format!("{}/{}", chosen_system, launch_path_relative)
+                        }
+                    } else { // default to /mnt/SDCARD/Emu(s)/<system>/launch.sh
+                        let system_name = chosen_system.rsplit('/').next().unwrap_or(chosen_system);
+                        format!("{}/{}/launch.sh", emu_path, system_name)
+                    };
+                    
+                    let _ = process::Command::new("/bin/sh")
+                        .arg(&launch_path)
+                        .arg(&chosen_rom)
+                        .exec();
+                }
+                
                 break;
             }
             _ => {
-                if argv.len() == 1 {
+                if posargs.len() == 1 {
                     chosen_system = &systems[rng.random_range(0..systems.len())]
                 }
                 continue;
             }
         }
     }
+    
     Ok(())
 }
