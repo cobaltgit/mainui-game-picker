@@ -39,7 +39,7 @@ $ ./mainui-game-picker --launch
 # get a random game from GBC and launch it using the GBC system's launch script
 # must be used as part of an app or X-menu script due to using execv instead of writing to /tmp/cmd_to_run.sh
 $ ./mainui-game-picker GBC --launch
-/mnt/SDCARD/Roms/SFC/Pokemon - Crystal Version (USA).zip
+/mnt/SDCARD/Roms/GBC/Pokemon - Crystal Version (USA).zip
 ...
 ```
 
