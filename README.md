@@ -21,7 +21,7 @@ Uses [cargo-zigbuild](https://github.com/rust-cross/cargo-zigbuild) to make cros
 
 Use as part of an app in MainUI
 
-```
+```sh
 # get a random game from any system and print it
 $ ./mainui-game-picker
 /mnt/SDCARD/Roms/FC/Super Mario Bros. (World).zip
@@ -42,5 +42,4 @@ $ ./mainui-game-picker GBC --launch
 /mnt/SDCARD/Roms/SFC/Pokemon - Crystal Version (USA).zip
 ...
 ```
-
 
