@@ -25,7 +25,6 @@ fn listdir(path: &str) -> io::Result<Vec<String>> {
 
 fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let config: Value = get_config(&format!("{}/config.json", system_path))?;
-    let rom_path_relative: &str = config["rompath"].as_str().ok_or("Missing rompath field!")?;
     let rom_path: String = if let Some(rom_path_relative) = config["rompath"].as_str() {
         if rom_path_relative.starts_with("/") { // absolute path
             rom_path_relative.to_string()
