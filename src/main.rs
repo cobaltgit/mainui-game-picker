@@ -25,9 +25,11 @@ fn listdir(path: &str) -> io::Result<Vec<String>> {
 
 #[inline]
 fn has_extension(path: &str, extensions: &[&str]) -> bool {
-    extensions.iter().any(|ext| {
-        path.to_lowercase().ends_with(&format!(".{}", ext.to_lowercase()))
-    })
+    if let Some(path_ext) = path.rsplit_once('.').map(|(_, ext)| ext) {
+        extensions.iter().any(|ext| path_ext.eq_ignore_ascii_case(ext))
+    } else {
+        false
+    }
 }
 
 fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
