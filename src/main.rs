@@ -1,5 +1,4 @@
 use rand::Rng;
-use regex::Regex;
 use serde_json::Value;
 use std::{env, fs, io, process};
 use std::os::unix::process::CommandExt;
@@ -24,6 +23,13 @@ fn listdir(path: &str) -> io::Result<Vec<String>> {
     Ok(entries)
 }
 
+#[inline]
+fn has_extension(path: &str, extensions: &[&str]) -> bool {
+    extensions.iter().any(|ext| {
+        path.to_lowercase().ends_with(&format!(".{}", ext.to_lowercase()))
+    })
+}
+
 fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let config: Value = get_config(&format!("{}/config.json", system_path))?;
     let rom_path: String = if let Some(rom_path_relative) = config["rompath"].as_str() {
@@ -42,11 +48,11 @@ fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>
         return Ok(all_roms);
     }
 
-    let extensions: &str = config["extlist"].as_str().ok_or("Missing extlist field!")?;
-    let re: Regex = Regex::new(&format!(r"\.({})$", extensions))?;
+    let extlist: &str = config["extlist"].as_str().ok_or("")?;
+    let extensions: Vec<&str> = extlist.split("|").collect();
 
     let roms: Vec<String> = all_roms.into_iter()
-        .filter(|s| re.is_match(s))
+        .filter(|s| has_extension(s, &extensions))
         .collect();
             
     Ok(roms)
