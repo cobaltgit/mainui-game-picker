@@ -60,9 +60,11 @@ fn get_roms(system_path: &str) -> Result<Vec<String>, Box<dyn std::error::Error>
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let argv: Vec<String> = env::args().collect();
-    let should_launch = argv.contains(&"--launch".to_string());
-    let posargs: Vec<String> = argv.into_iter().filter(|a| a != "--launch").collect();
-    let system_arg: String = posargs.get(1).map_or("NULL", |v| v).to_string();
+    let should_launch = argv.iter().any(|arg| arg == "--launch");
+    let system_arg: Option<&str> = argv.get(1)
+        .filter(|&arg| arg != "--launch")
+        .or_else(|| argv.get(2))
+        .map(|s| s.as_str());
     
     let mut rng = rand::rng();
     
@@ -73,13 +75,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     let systems: Vec<String> = listdir(emu_path)?;
     
-    let mut chosen_system: &str = if posargs.len() > 1 {
-        &format!("{}/{}", emu_path, system_arg)
+    let mut chosen_system: &str = if let Some(sys) = system_arg {
+        &format!("{}/{}", emu_path, sys)
     } else {
         &systems[rng.random_range(0..systems.len())]
     };
 
-    if !fs::metadata(chosen_system).is_ok() || system_arg.starts_with("/") || system_arg.contains("..") {
+    if !fs::metadata(chosen_system).is_ok() || system_arg.map_or(false, |s| s.starts_with('/') || s.contains("..")) {
         eprintln!("{}: invalid or nonexistent directory", chosen_system);
         process::exit(1)
     }
@@ -112,7 +114,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 break;
             }
             _ => {
-                if posargs.len() == 1 {
+                if system_arg.is_none() {
                     chosen_system = &systems[rng.random_range(0..systems.len())]
                 }
                 continue;
