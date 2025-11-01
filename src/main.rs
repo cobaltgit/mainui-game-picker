@@ -118,6 +118,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             _ => {
                 if system_arg.is_none() {
                     chosen_system = &systems[rng.random_range(0..systems.len())]
+                } else {
+                    eprintln!("No ROMs in system '{}'", chosen_system.rsplit_once("/").ok_or("/")?.1);
+                    process::exit(1);
                 }
                 continue;
             }
