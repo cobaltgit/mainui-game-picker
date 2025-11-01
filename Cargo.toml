@@ -1,3 +1,5 @@
+cargo-features = ["panic-immediate-abort"]
+
 [package]
 name = "mainui-game-picker"
 version = "1.2.2"
@@ -11,5 +13,5 @@ serde_json = "1.0.145"
 opt-level = "z"
 lto = true
 codegen-units = 1
-panic = 'abort'
+panic = 'immediate-abort'
 strip = true
